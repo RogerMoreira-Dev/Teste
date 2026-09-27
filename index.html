@@ -7,7 +7,7 @@
 <style>
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2f3a,#0b0d12);overflow:hidden;perspective:1200px;touch-action:none}
 .stage{position:relative;animation:float 4s ease-in-out infinite}
-.card{width:min(80vw,720px);transform-style:preserve-3d;transition:transform .15s ease-out}
+.card{width:min(80vw,720px);transform-style:preserve-3d;cursor:grab;user-select:none}
 .card img{width:100%;display:block;mix-blend-mode:multiply;filter:drop-shadow(0 30px 25px rgba(0,0,0,.6));border-radius:12px;background:#fff}
 .shadow{position:absolute;left:15%;right:15%;bottom:-60px;height:30px;background:radial-gradient(ellipse,rgba(0,0,0,.7),transparent 70%);animation:shadow 4s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-25px)}}
@@ -15,18 +15,16 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial
 </style>
 </head>
 <body>
-<div class="stage"><div class="card" id="c"><img src="gpu.webp" alt="ASUS Prime GPU"></div><div class="shadow"></div></div>
+<div class="stage"><div class="card" id="c"><img draggable="false" src="gpu.webp" alt="ASUS Prime GPU"></div><div class="shadow"></div></div>
 <script>
 const c=document.getElementById('c');
-const tilt=(x,y)=>c.style.transform=`rotateY(${x*30}deg) rotateX(${-y*20}deg)`;
-addEventListener('pointermove',e=>tilt(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5));
-addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')c.style.transform=''});
-addEventListener('pointerleave',()=>c.style.transform='');
-const gyro=e=>{if(e.gamma!=null)tilt(Math.max(-1,Math.min(1,e.gamma/45))/2,Math.max(-1,Math.min(1,(e.beta-45)/45))/2)};
-const startGyro=()=>{const D=window.DeviceOrientationEvent;if(!D)return;
-if(D.requestPermission)D.requestPermission().then(r=>r==='granted'&&addEventListener('deviceorientation',gyro)).catch(()=>{});
-else addEventListener('deviceorientation',gyro)};
-addEventListener('touchstart',startGyro,{once:true});
+let rx=0,ry=0,vx=0,vy=0,drag=false,lx=0,ly=0,lt=0;
+addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;lt=e.timeStamp;vx=vy=0});
+addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly,dt=Math.max(e.timeStamp-lt,1);
+ry+=dx*.5;rx-=dy*.5;vy=dx*.5/dt*16;vx=-dy*.5/dt*16;lx=e.clientX;ly=e.clientY;lt=e.timeStamp});
+const end=()=>drag=false;addEventListener('pointerup',end);addEventListener('pointercancel',end);
+(function loop(){if(!drag){ry+=vy;rx+=vx;vy*=.95;vx*=.95;if(Math.abs(vx)+Math.abs(vy)<.05)rx*=.95}
+c.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`;requestAnimationFrame(loop)})();
 </script>
 </body>
 </html>
