@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GPU Floating 3D</title>
 <style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2f3a,#0b0d12);overflow:hidden;perspective:1200px}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2f3a,#0b0d12);overflow:hidden;perspective:1200px;touch-action:none}
 .stage{position:relative;animation:float 4s ease-in-out infinite}
 .card{width:min(80vw,720px);transform-style:preserve-3d;transition:transform .15s ease-out}
 .card img{width:100%;display:block;mix-blend-mode:multiply;filter:drop-shadow(0 30px 25px rgba(0,0,0,.6));border-radius:12px;background:#fff}
@@ -18,8 +18,15 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial
 <div class="stage"><div class="card" id="c"><img src="gpu.webp" alt="ASUS Prime GPU"></div><div class="shadow"></div></div>
 <script>
 const c=document.getElementById('c');
-addEventListener('pointermove',e=>{const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;c.style.transform=`rotateY(${x*30}deg) rotateX(${-y*20}deg)`});
+const tilt=(x,y)=>c.style.transform=`rotateY(${x*30}deg) rotateX(${-y*20}deg)`;
+addEventListener('pointermove',e=>tilt(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5));
+addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')c.style.transform=''});
 addEventListener('pointerleave',()=>c.style.transform='');
+const gyro=e=>{if(e.gamma!=null)tilt(Math.max(-1,Math.min(1,e.gamma/45))/2,Math.max(-1,Math.min(1,(e.beta-45)/45))/2)};
+const startGyro=()=>{const D=window.DeviceOrientationEvent;if(!D)return;
+if(D.requestPermission)D.requestPermission().then(r=>r==='granted'&&addEventListener('deviceorientation',gyro)).catch(()=>{});
+else addEventListener('deviceorientation',gyro)};
+addEventListener('touchstart',startGyro,{once:true});
 </script>
 </body>
 </html>
